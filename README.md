@@ -8,6 +8,13 @@ Minimal MCP server for YouTrack time tracking with direct API writes.
 - Build daily report for a period (with target hours/day delta).
 - No raw text parsing in MCP.
 
+## YouTrack compatibility
+
+- Minimum tested YouTrack API version: `2022.1` (from `/api/openapi.json -> info.version`).
+- The server uses only these REST endpoints:
+  - `GET /api/workItems`
+  - `POST /api/issues/{id}/timeTracking/workItems`
+
 ## Install (uvx, no local setup)
 
 Run directly from GitHub:
@@ -38,6 +45,22 @@ Option 2 (env vars):
 export YOUTRACK_BASE_URL="https://newtrack.spectrum.int"
 export YOUTRACK_TOKEN="perm:..."
 ```
+
+## Security / read-only mode
+
+- To force safe report-only behavior, enable:
+
+```bash
+export YOUTRACK_TIME_MCP_READ_ONLY=true
+```
+
+- In read-only mode:
+  - `time_report` and `healthcheck` work
+  - `log_time` is blocked by server validation
+
+- Recommended token policy:
+  - For report-only usage: use a read-only token.
+  - For logging usage: use a dedicated least-privilege token that can read work items and create work items only.
 
 ## CLI usage
 
@@ -83,7 +106,8 @@ yt-time-mcp
       ],
       "env": {
         "YOUTRACK_BASE_URL": "https://newtrack.spectrum.int",
-        "YOUTRACK_TOKEN": "perm:..."
+        "YOUTRACK_TOKEN": "perm:...",
+        "YOUTRACK_TIME_MCP_READ_ONLY": "true"
       }
     }
   }
@@ -103,7 +127,7 @@ Optional pin to tag/commit:
 Quick add via CLI:
 
 ```bash
-codex mcp add youtrack-time --command uvx --args --from git+https://github.com/c0t0ber/yt-time-mcp yt-time-mcp
+codex mcp add youtrack-time -- uvx --from git+https://github.com/c0t0ber/yt-time-mcp yt-time-mcp
 ```
 
 Or add to `~/.codex/config.toml`:
@@ -116,6 +140,7 @@ args = ["--from", "git+https://github.com/c0t0ber/yt-time-mcp", "yt-time-mcp"]
 [mcp_servers.youtrack_time.env]
 YOUTRACK_BASE_URL = "https://newtrack.spectrum.int"
 YOUTRACK_TOKEN = "perm:..."
+YOUTRACK_TIME_MCP_READ_ONLY = "true"
 ```
 
 ### Claude Code
@@ -134,7 +159,8 @@ Create `.mcp.json` in the project root:
       ],
       "env": {
         "YOUTRACK_BASE_URL": "https://newtrack.spectrum.int",
-        "YOUTRACK_TOKEN": "perm:..."
+        "YOUTRACK_TOKEN": "perm:...",
+        "YOUTRACK_TIME_MCP_READ_ONLY": "true"
       }
     }
   }
@@ -158,7 +184,8 @@ Use either project config `.cursor/mcp.json` or global config `~/.cursor/mcp.jso
       ],
       "env": {
         "YOUTRACK_BASE_URL": "https://newtrack.spectrum.int",
-        "YOUTRACK_TOKEN": "perm:..."
+        "YOUTRACK_TOKEN": "perm:...",
+        "YOUTRACK_TIME_MCP_READ_ONLY": "true"
       }
     }
   }

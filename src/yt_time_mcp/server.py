@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import date, datetime
 from typing import Any
 
@@ -18,6 +19,11 @@ def _parse_date(value: str | None, *, default: date | None = None) -> date:
     return datetime.strptime(value, "%Y-%m-%d").date()
 
 
+def _is_read_only_mode() -> bool:
+    raw = os.getenv("YOUTRACK_TIME_MCP_READ_ONLY", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
+
+
 @mcp.tool()
 def log_time(issue_id: str, date_str: str, minutes: int, text: str = "") -> dict[str, Any]:
     """Create one YouTrack work item.
@@ -28,6 +34,8 @@ def log_time(issue_id: str, date_str: str, minutes: int, text: str = "") -> dict
     """
     client = YouTrackClient.from_env_or_auth_file()
     entry_date = _parse_date(date_str)
+    if _is_read_only_mode():
+        raise ValueError("read-only mode is enabled (YOUTRACK_TIME_MCP_READ_ONLY=true), log_time is disabled")
     if minutes <= 0:
         raise ValueError("minutes must be > 0")
     created = client.log_work_item(issue_id=issue_id, entry_date=entry_date, minutes=minutes, text=text)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime
 
 from .youtrack_api import YouTrackClient
@@ -11,6 +12,11 @@ def _parse_date(value: str | None) -> date | None:
     if not value:
         return None
     return datetime.strptime(value, "%Y-%m-%d").date()
+
+
+def _is_read_only_mode() -> bool:
+    raw = os.getenv("YOUTRACK_TIME_MCP_READ_ONLY", "").strip().lower()
+    return raw in {"1", "true", "yes", "on"}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -38,6 +44,8 @@ def main() -> None:
     client = YouTrackClient.from_env_or_auth_file()
 
     if args.cmd == "log":
+        if _is_read_only_mode():
+            raise SystemExit("read-only mode is enabled (YOUTRACK_TIME_MCP_READ_ONLY=true), log is disabled")
         if args.minutes <= 0:
             raise SystemExit("--minutes must be > 0")
         created = client.log_work_item(
