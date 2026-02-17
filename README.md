@@ -121,6 +121,75 @@ Optional pin to tag/commit:
 "args": ["--from", "git+https://github.com/c0t0ber/yt-time-mcp@<tag-or-commit>", "yt-time-mcp"]
 ```
 
+## Client setup
+
+### Codex (CLI / IDE extension)
+
+Quick add via CLI:
+
+```bash
+codex mcp add youtrack-time --command uvx --args --from git+https://github.com/c0t0ber/yt-time-mcp yt-time-mcp
+```
+
+Or add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.youtrack_time]
+command = "uvx"
+args = ["--from", "git+https://github.com/c0t0ber/yt-time-mcp", "yt-time-mcp"]
+
+[mcp_servers.youtrack_time.env]
+YOUTRACK_BASE_URL = "https://newtrack.spectrum.int"
+YOUTRACK_TOKEN = "perm:..."
+```
+
+### Claude Code
+
+Create `.mcp.json` in the project root:
+
+```json
+{
+  "mcpServers": {
+    "youtrack-time": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/c0t0ber/yt-time-mcp",
+        "yt-time-mcp"
+      ],
+      "env": {
+        "YOUTRACK_BASE_URL": "https://newtrack.spectrum.int",
+        "YOUTRACK_TOKEN": "perm:..."
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Use either project config `.cursor/mcp.json` or global config `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "youtrack-time": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/c0t0ber/yt-time-mcp",
+        "yt-time-mcp"
+      ],
+      "env": {
+        "YOUTRACK_BASE_URL": "https://newtrack.spectrum.int",
+        "YOUTRACK_TOKEN": "perm:..."
+      }
+    }
+  }
+}
+```
+
 ## Publish to GitHub
 
 ```bash
