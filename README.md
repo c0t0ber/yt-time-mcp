@@ -1,14 +1,12 @@
 # yt-time-mcp
 
-MCP server for YouTrack time tracking with reliable direct API writes (without buggy third-party connector behavior).
+Minimal MCP server for YouTrack time tracking with direct API writes.
 
 ## What it does
 
-- Accepts raw text like `SPS-578 пятница 6ч`.
-- Parses issue id, date and duration.
-- Writes work items directly to YouTrack API.
-- Has dry-run mode before writing.
-- Generates per-day report with deficit vs 8h/day.
+- Log time to an issue in minutes.
+- Build daily report for a period (with target hours/day delta).
+- No raw text parsing in MCP.
 
 ## Install (uvx, no local setup)
 
@@ -41,39 +39,18 @@ export YOUTRACK_BASE_URL="https://newtrack.spectrum.int"
 export YOUTRACK_TOKEN="perm:..."
 ```
 
-## Raw text format examples
-
-```text
-SPS-578 пятница 6ч
-SPS-578 понедельник 5h
-SPS-652 2026-02-13 2:30
-SPS-578 13.02 2ч 30м
-SPS-578 пн 2ч; вт 3ч
-```
-
-Notes:
-
-- If weekday is provided (`пн`, `пятница`), parser resolves it to the nearest past weekday relative to `reference_date` (or today).
-- If issue id/date is omitted in next chunk, previous value is reused.
-
 ## CLI usage
 
-Dry-run parse:
+Log time:
 
 ```bash
-yt-time-cli parse --text "SPS-578 пятница 6ч"
+yt-time-cli log --issue-id SPS-578 --date 2026-02-13 --minutes 360 --text "work"
 ```
 
-Apply from file:
+Get report:
 
 ```bash
-yt-time-cli apply --file entries.txt --reference-date 2026-02-17
-```
-
-Apply with safety preview:
-
-```bash
-yt-time-cli apply --file entries.txt --reference-date 2026-02-17 --dry-run
+yt-time-cli report --start-date 2026-02-11 --end-date 2026-02-17 --author me --target-hours-per-day 8
 ```
 
 ## MCP tools
@@ -82,10 +59,8 @@ Server name: `youtrack-time-mcp`
 
 Exposed tools:
 
-- `parse_time_text(raw_text, reference_date?)`
-- `add_time(issue_id, date_str, duration, text="")`
-- `add_time_from_text(raw_text, dry_run=true, reference_date?, note_prefix="")`
-- `daily_report(start_date, end_date, target_hours_per_day=8.0, author="me")`
+- `log_time(issue_id, date_str, minutes, text="")`
+- `time_report(start_date, end_date, target_hours_per_day=8.0, author="me")`
 - `healthcheck()`
 
 Run server:

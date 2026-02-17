@@ -5,7 +5,6 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from .parser import ParseError, ParsedEntry, parse_duration_minutes, parse_raw_entries
 from .youtrack_api import YouTrackClient, YouTrackError
 
 mcp = FastMCP("youtrack-time-mcp")
@@ -19,49 +18,18 @@ def _parse_date(value: str | None, *, default: date | None = None) -> date:
     return datetime.strptime(value, "%Y-%m-%d").date()
 
 
-def _entries_preview(entries: list[ParsedEntry]) -> list[dict[str, Any]]:
-    return [
-        {
-            "issue_id": e.issue_id,
-            "date": e.date.isoformat(),
-            "minutes": e.minutes,
-            "hours": round(e.minutes / 60, 2),
-            "text": e.text,
-            "source_line": e.source_line,
-        }
-        for e in entries
-    ]
-
-
 @mcp.tool()
-def parse_time_text(raw_text: str, reference_date: str | None = None) -> dict[str, Any]:
-    """Parse raw text into normalized time entries without writing to YouTrack.
+def log_time(issue_id: str, date_str: str, minutes: int, text: str = "") -> dict[str, Any]:
+    """Create one YouTrack work item.
 
-    Expected line examples:
-    - SPS-578 пятница 6ч
-    - SPS-578 2026-02-16 5h
-    - SPS-578 13.02 2:30
-    - SPS-578 пн 2ч; вт 3ч
-    """
-    ref = _parse_date(reference_date, default=date.today())
-    entries = parse_raw_entries(raw_text, reference_date=ref)
-    return {
-        "count": len(entries),
-        "total_minutes": sum(e.minutes for e in entries),
-        "entries": _entries_preview(entries),
-    }
-
-
-@mcp.tool()
-def add_time(issue_id: str, date_str: str, duration: str, text: str = "") -> dict[str, Any]:
-    """Add one worklog item to YouTrack.
-
-    duration examples: 6h, 2.5h, 2:30, 150m, 6ч, 2ч 30м
-    date format: YYYY-MM-DD
+    issue_id: issue key like SPS-578
+    date_str: YYYY-MM-DD
+    minutes: integer minutes to log
     """
     client = YouTrackClient.from_env_or_auth_file()
     entry_date = _parse_date(date_str)
-    minutes = parse_duration_minutes(duration)
+    if minutes <= 0:
+        raise ValueError("minutes must be > 0")
     created = client.log_work_item(issue_id=issue_id, entry_date=entry_date, minutes=minutes, text=text)
     return {
         "created": created,
@@ -71,49 +39,7 @@ def add_time(issue_id: str, date_str: str, duration: str, text: str = "") -> dic
 
 
 @mcp.tool()
-def add_time_from_text(
-    raw_text: str,
-    dry_run: bool = True,
-    reference_date: str | None = None,
-    note_prefix: str = "",
-) -> dict[str, Any]:
-    """Parse raw text and add all entries to YouTrack.
-
-    Use dry_run=true first to validate parsing.
-    """
-    ref = _parse_date(reference_date, default=date.today())
-    entries = parse_raw_entries(raw_text, reference_date=ref)
-
-    if dry_run:
-        return {
-            "dry_run": True,
-            "count": len(entries),
-            "total_minutes": sum(e.minutes for e in entries),
-            "entries": _entries_preview(entries),
-        }
-
-    client = YouTrackClient.from_env_or_auth_file()
-    created_items: list[dict[str, Any]] = []
-    for entry in entries:
-        text = f"{note_prefix}{entry.text}".strip()
-        created = client.log_work_item(
-            issue_id=entry.issue_id,
-            entry_date=entry.date,
-            minutes=entry.minutes,
-            text=text,
-        )
-        created_items.append(created)
-
-    return {
-        "dry_run": False,
-        "count": len(created_items),
-        "total_minutes": sum(e.minutes for e in entries),
-        "created": created_items,
-    }
-
-
-@mcp.tool()
-def daily_report(
+def time_report(
     start_date: str,
     end_date: str,
     target_hours_per_day: float = 8.0,
@@ -173,7 +99,7 @@ def healthcheck() -> dict[str, Any]:
 def main() -> None:
     try:
         mcp.run(transport="stdio")
-    except (YouTrackError, ParseError, ValueError) as exc:
+    except (YouTrackError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
 
 
