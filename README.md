@@ -10,7 +10,15 @@ MCP server for YouTrack time tracking with reliable direct API writes (without b
 - Has dry-run mode before writing.
 - Generates per-day report with deficit vs 8h/day.
 
-## Install
+## Install (uvx, no local setup)
+
+Run directly from GitHub:
+
+```bash
+uvx --from git+https://github.com/c0t0ber/yt-time-mcp yt-time-cli --help
+```
+
+## Install (local dev)
 
 ```bash
 cd yt-time-mcp
@@ -86,13 +94,18 @@ Run server:
 yt-time-mcp
 ```
 
-## MCP client config example (stdio)
+## MCP client config example (stdio + uvx)
 
 ```json
 {
   "mcpServers": {
     "youtrack-time": {
-      "command": "/absolute/path/to/yt-time-mcp/.venv/bin/yt-time-mcp",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/c0t0ber/yt-time-mcp",
+        "yt-time-mcp"
+      ],
       "env": {
         "YOUTRACK_BASE_URL": "https://newtrack.spectrum.int",
         "YOUTRACK_TOKEN": "perm:..."
@@ -100,6 +113,12 @@ yt-time-mcp
     }
   }
 }
+```
+
+Optional pin to tag/commit:
+
+```json
+"args": ["--from", "git+https://github.com/c0t0ber/yt-time-mcp@<tag-or-commit>", "yt-time-mcp"]
 ```
 
 ## Publish to GitHub
