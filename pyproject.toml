@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yt-time-mcp"
+version = "0.1.0"
+description = "MCP server for YouTrack time tracking with raw-text parsing"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp>=1.13.0",
+]
+
+[project.scripts]
+yt-time-mcp = "yt_time_mcp.server:main"
+yt-time-cli = "yt_time_mcp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
